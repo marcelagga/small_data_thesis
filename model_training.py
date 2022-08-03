@@ -10,6 +10,7 @@ from sklearn import svm
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, InputLayer
 import tensorflow as tf
+from scipy import stats
 
 
 def get_sample(df, size, seed):
@@ -64,26 +65,26 @@ def train_neural_network(x_train, y_train):
     n_classes = len(np.unique(y_train))
     n_features = x_train.shape[1]
     sequential_list = [InputLayer(n_features),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal()),
-                          Dropout(0.1),
-                          Dense(100, activation = "elu",kernel_initializer=tf.keras.initializers.HeNormal())
-                      ]
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(0.1),
+                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal())
+                       ]
     if n_classes > 2:
         sequential_list.append(Dense(n_classes + 1, activation="softmax"))
         loss = "sparse_categorical_crossentropy"
@@ -136,7 +137,6 @@ def get_results(df, seeds, model):
     size = 1000
     total_iters = 10
     cols = range(total_iters)
-    scaler = MinMaxScaler()
 
     results = {'accuracy_train': pd.DataFrame(columns=cols),
                'accuracy_test': pd.DataFrame(columns=cols),
@@ -146,11 +146,10 @@ def get_results(df, seeds, model):
 
     for seed in seeds:
 
-        if (seed + 1) % 5 == 0:
-            print(f'\n Calculating seed {seed + 1} out of {len(seeds)}')
-            print('-------------------------')
+        print(f'\n Calculating seed {seed + 1} out of {len(seeds)}')
+        print('-------------------------')
 
-        df_sample = get_sample(df, 1000, seed)
+        df_sample = get_sample(df, size, seed)
         df_remaining_data = df_sample.copy()
         size_sample = int(size / 10)
 
@@ -163,8 +162,9 @@ def get_results(df, seeds, model):
             df_new_sample = get_sample(df_remaining_data, size_sample, 42)
             df_iter = pd.concat([df_iter, df_new_sample])
             df_remaining_data = df_remaining_data[~df_remaining_data.index.isin(df_iter.index)]
-
+            print(len(df_iter))
             x_train, x_test, y_train, y_test = split_train_test(df_iter)
+            scaler = MinMaxScaler()
             x_train = scaler.fit_transform(x_train)
             x_test = scaler.transform(x_test)
 
@@ -200,7 +200,7 @@ def get_results(df, seeds, model):
             times_prediction_train.append(results_train['time'])
             times_prediction_test.append(results_test['time'])
             times_train.append(training_time)
-
+            print(seed, n_iter, results_test['accuracy'])
         results['accuracy_train'].loc[seed] = accuracies_train
         results['accuracy_test'].loc[seed] = accuracies_test
         results['time_training'].loc[seed] = times_train
@@ -216,38 +216,38 @@ def compute_all_models_results(df, n_seeds=30):
     """
     seeds = list(range(n_seeds))
 
-    print('Starting iterations with DNN....')
-    start_time = time.time()
-    results_neural_network = get_results(df,seeds,'DNN')
-    end_time  = time.time()
-    print(f'\n Execution time for DNN is {end_time - start_time}')
-    print('--------------------------------------')
+    # print('Starting iterations with DNN....')
+    # start_time = time.time()
+    # results_neural_network = get_results(df, seeds, 'DNN')
+    # end_time = time.time()
+    # print(f'\n Execution time for DNN is {end_time - start_time} \n')
+    # print('--------------------------------------')
 
     print('Starting iterations with DF....')
     start_time = time.time()
-    results_deep_forest = get_results(df, seeds,'DF')
+    results_deep_forest = get_results(df, seeds, 'DF')
     end_time = time.time()
-    print(f'\n Execution time for DF is {end_time - start_time}')
+    print(f'\n Execution time for DF is {end_time - start_time} \n')
     print('--------------------------------------')
 
     print('Starting iterations with RF....')
     start_time = time.time()
     results_random_forest = get_results(df, seeds, 'RF')
     end_time = time.time()
-    print(f'\n Execution time for RF is {end_time - start_time}')
+    print(f'\n Execution time for RF is {end_time - start_time} \n')
     print('--------------------------------------')
 
     print('Starting iterations with DT....')
     start_time = time.time()
     results_decision_tree = get_results(df, seeds, 'DT')
     end_time = time.time()
-    print(f'Execution time for DT is {end_time - start_time}')
+    print(f'Execution time for DT is {end_time - start_time} \n')
 
     print('Starting iterations with SVM....')
     start_time = time.time()
     results_support_vector_machine = get_results(df, seeds, 'SVM')
     end_time = time.time()
-    print(f'Execution time for SVM is {end_time - start_time}')
+    print(f'Execution time for SVM is {end_time - start_time} \n')
 
     results = {'DF': results_deep_forest,
                'DNN': results_neural_network,
@@ -258,46 +258,81 @@ def compute_all_models_results(df, n_seeds=30):
     return results
 
 
-def get_accuracy_dataframe(results):
-    df_DF = results['DF'][1]
-    df_DNN = results['DNN'][1]
-    df_RF = results['RF'][1]
-    df_DT = results['DT'][1]
-    df_SVM = results['SVM'][1]
-
-    df_results_DF = pd.DataFrame()
-    df_results_DF['Accuracy'] = df_DF.mean(axis=1)
-    df_results_DF['Model'] = 'DF'
-
-    df_results_DNN = pd.DataFrame()
-    df_results_DNN['Accuracy'] = df_DNN.mean(axis=1)
-    df_results_DNN['Model'] = 'DNN'
-
-    df_results_RF = pd.DataFrame()
-    df_results_RF['Accuracy'] = df_RF.mean(axis=1)
-    df_results_RF['Model'] = 'RF'
-
-    df_results_DT = pd.DataFrame()
-    df_results_DT['Accuracy'] = df_DT.mean(axis=1)
-    df_results_DT['Model'] = 'DT'
-
-    df_results_SVM = pd.DataFrame()
-    df_results_SVM['Accuracy'] = df_SVM.mean(axis=1)
-    df_results_SVM['Model'] = 'SVM'
-
-    df_accuracy_models = pd.concat([df_results_DF, df_results_DNN, df_results_RF, df_results_DT, df_results_SVM])
-    df_accuracy_models = df_accuracy_models.reset_index()
-    df_accuracy_models = df_accuracy_models.rename(columns={'index': 'Split'})
-    df_accuracy_models['text'] = round(df_accuracy_models['Accuracy'], 2).astype(str)
-
-    return df_accuracy_models
-
-
-def get_df_accuracy_models(results):
+def get_average_results(results, metric):
+    """
+    Computes average for all iterations for the given metric.
+    Returns a dataframe with the results
+    """
     df = pd.DataFrame()
-    df['DF'] = results['DF'][1].mean()
-    df['DNN'] = results['DNN'][1].mean()
-    df['RF'] = results['RF'][1].mean()
-    df['DT'] = results['DT'][1].mean()
-    df['SVM'] = results['SVM'][1].mean()
+    df['DF'] = results['DF'][metric].mean()
+    df['DNN'] = results['DNN'][metric].mean()
+    df['RF'] = results['RF'][metric].mean()
+    df['DT'] = results['DT'][metric].mean()
+    df['SVM'] = results['SVM'][metric].mean()
+
     return df
+
+
+def students_t_test(sample_1, sample_2):
+    """ Computes pairwise t-student p-value for the given samples """
+    return stats.ttest_ind(a=sample_1, b=sample_2, equal_var=True).pvalue
+
+
+def compute_all_p_values(df):
+    """
+    Computes all sample t-student p-value combinations
+    for all models
+    """
+    combinations_pairs = [('DF', 'DNN'), ('DF', 'RF'), ('DF', 'DT'),
+                          ('DNN', 'RF'), ('DNN', 'DT'), ('RF', 'DT'),
+                          ('DF', 'SVM'), ('DNN', 'SVM'), ('RF', 'SVM'),
+                          ('DT', 'SVM')]
+
+    for pair in combinations_pairs:
+        print(pair)
+        col_1 = pair[0]
+        col_2 = pair[1]
+        sample_1 = df[col_1]
+        sample_2 = df[col_2]
+        students_t_test(sample_1, sample_2)
+        print('----------------------------')
+
+
+def create_table_accuracy(results, metric):
+    """
+    Prints a table with accuracies and statistically
+    significant means
+    """
+    model_means = {'DF': results['DF'][metric].mean(),
+                   'DNN': results['DNN'][metric].mean(),
+                   'RF': results['RF'][metric].mean(),
+                   'DT': results['DT'][metric].mean(),
+                   'SVM': results['SVM'][metric].mean()}
+
+    df_table = pd.DataFrame(columns=model_means.keys())
+
+    for n in range(0, 10):
+
+        new_row = {model: [round(model_means[model][n].mean(), 2)]
+                   for model in model_means}
+        df_new_row = pd.DataFrame.from_dict(new_row)
+        df_table = pd.concat([df_table, df_new_row], ignore_index=True)
+        best_model = df_table.iloc[n].astype(float).idxmax()
+        best_models = [best_model]
+
+        for model in model_means:
+            if model != best_model:
+                p_value = students_t_test(results[best_model]['accuracy_test'][n], results[model]['accuracy_test'][n])
+                if p_value > 0.05:
+                    best_models.append(model)
+
+        df_table = df_table.astype(str)
+
+        for model in best_models:
+            df_table.iloc[n][model] = df_table.iloc[n][model] + '*'
+
+        df_table.iloc[n][best_model] = '\textcolor{blue}{\textbf{' + df_table.iloc[n][best_model] + '}}'
+
+    df_table.index = df_table.index * 100 + 100
+
+    return df_table

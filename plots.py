@@ -2,15 +2,15 @@ import plotly.express as px
 import pandas as pd
 
 def bar_plot(results):
-    df_DF_results = results['DF'][1].melt()
+    df_DF_results = results['DF']['accuracy_test'].melt()
     df_DF_results['model'] = 'DF'
-    df_DNN_results = results['DNN'][1].melt()
+    df_DNN_results = results['DNN']['accuracy_test'].melt()
     df_DNN_results['model'] = 'DNN'
-    df_RF_results = results['RF'][1].melt()
+    df_RF_results = results['RF']['accuracy_test'].melt()
     df_RF_results['model'] = 'RF'
-    df_DT_results = results['DT'][1].melt()
+    df_DT_results = results['DT']['accuracy_test'].melt()
     df_DT_results['model'] = 'DT'
-    df_SVM_results = results['SVM'][1].melt()
+    df_SVM_results = results['SVM']['accuracy_test'].melt()
     df_SVM_results['model'] = 'SVM'
     all_results = [df_DF_results, df_DNN_results, df_RF_results, df_DT_results, df_SVM_results]
     df_all_results = pd.concat(all_results)
