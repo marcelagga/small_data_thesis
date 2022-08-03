@@ -45,9 +45,7 @@ def load_digits_dataset():
 
 def load_chess_dataset():
     df_chess = pd.read_csv('chess.data', header=None)
-    encoding = {'b': 0, 'f': 1, 'g': 2, 'l': 3, 'n': 4, 't': 5, 'w': 6}
-    for col in list(range(36)):
-        df_chess[col] = df_chess[col].apply(lambda x: encoding[x])
+    df_chess = pd.get_dummies(df_chess, columns=range(36))
     df_chess = df_chess.rename(columns={36: 'target'})
     return df_chess
 
