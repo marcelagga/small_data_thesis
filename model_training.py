@@ -45,18 +45,20 @@ def split_train_test(df):
     return x_train, x_test, y_train, y_test
 
 
-def train_deep_forest(x_train, y_train):
+def train_deep_forest(x_train, y_train, params):
     """
     Returns a trained Deep Forest with the given data.
     There is a bug in the code for Deep Forest and the
     classifier can't be reused in a loop.
     """
-    clf = CascadeForestClassifier(random_state=0, verbose=0)
+    #clf = CascadeForestClassifier(random_state=0, verbose=0)
+    clf = CascadeForestClassifier(**params)
+
     clf.fit(x_train, y_train)
     return clf
 
 
-def train_neural_network(x_train, y_train):
+def train_neural_network(x_train, y_train, params):
     """
     Returns a trained Neural Network with the given data.
     There is a distinction between binary or multiclass case
@@ -126,7 +128,7 @@ def compute_accuracy(x, y, clf, model):
     return {'accuracy': accuracy, 'time': time_prediction}
 
 
-def get_results(df, seeds, model):
+def get_results(df, seeds, model, model_params):
     """
     Returns a dictionary with multiple dataframes with
     accuracy for train set, accuracy for test set,
@@ -145,9 +147,9 @@ def get_results(df, seeds, model):
                'time_prediction_test': pd.DataFrame(columns=cols)}
 
     for seed in seeds:
-
-        print(f'\n Calculating seed {seed + 1} out of {len(seeds)}')
-        print('-------------------------')
+        if (seed + 1)%5 == 0:
+            print(f'\n Calculating seed {seed + 1} out of {len(seeds)}')
+            print('-------------------------')
 
         df_sample = get_sample(df, size, seed)
         df_remaining_data = df_sample.copy()
@@ -158,34 +160,34 @@ def get_results(df, seeds, model):
         times_train, times_prediction_train, times_prediction_test = [], [], []
 
         for n_iter in range(total_iters):
-
             df_new_sample = get_sample(df_remaining_data, size_sample, 42)
             df_iter = pd.concat([df_iter, df_new_sample])
             df_remaining_data = df_remaining_data[~df_remaining_data.index.isin(df_iter.index)]
-            print(len(df_iter))
             x_train, x_test, y_train, y_test = split_train_test(df_iter)
             scaler = MinMaxScaler()
             x_train = scaler.fit_transform(x_train)
             x_test = scaler.transform(x_test)
+            params = model_params[model]
 
             start_time = time.time()
 
+
             if model == 'DF':
-                clf = train_deep_forest(x_train, y_train)
+                clf = train_deep_forest(x_train, y_train, params)
 
             if model == 'DNN':
-                clf = train_neural_network(x_train, y_train)
+                clf = train_neural_network(x_train, y_train, params)
 
             if model == 'RF':
-                clf = RandomForestClassifier(random_state=42)
+                clf = RandomForestClassifier(**params)
                 clf.fit(x_train, y_train)
 
             if model == 'DT':
-                clf = DecisionTreeClassifier(random_state=42)
+                clf = DecisionTreeClassifier(**params)
                 clf.fit(x_train, y_train)
 
             if model == 'SVM':
-                clf = svm.SVC(random_state=42)
+                clf = svm.SVC(**params)
                 clf.fit(x_train, y_train)
 
             end_time = time.time()
@@ -200,7 +202,7 @@ def get_results(df, seeds, model):
             times_prediction_train.append(results_train['time'])
             times_prediction_test.append(results_test['time'])
             times_train.append(training_time)
-            print(seed, n_iter, results_test['accuracy'])
+
         results['accuracy_train'].loc[seed] = accuracies_train
         results['accuracy_test'].loc[seed] = accuracies_test
         results['time_training'].loc[seed] = times_train
@@ -210,42 +212,42 @@ def get_results(df, seeds, model):
     return results
 
 
-def compute_all_models_results(df, n_seeds=30):
+def compute_all_models_results(df, model_params, n_seeds=30):
     """
     Computes the results for all the models
     """
     seeds = list(range(n_seeds))
 
-    # print('Starting iterations with DNN....')
-    # start_time = time.time()
-    # results_neural_network = get_results(df, seeds, 'DNN')
-    # end_time = time.time()
-    # print(f'\n Execution time for DNN is {end_time - start_time} \n')
-    # print('--------------------------------------')
+    print('Starting iterations with DNN....')
+    start_time = time.time()
+    results_neural_network = get_results(df, seeds, 'DNN', model_params)
+    end_time = time.time()
+    print(f'\n Execution time for DNN is {end_time - start_time} \n')
+    print('--------------------------------------')
 
     print('Starting iterations with DF....')
     start_time = time.time()
-    results_deep_forest = get_results(df, seeds, 'DF')
+    results_deep_forest = get_results(df, seeds, 'DF', model_params)
     end_time = time.time()
     print(f'\n Execution time for DF is {end_time - start_time} \n')
     print('--------------------------------------')
 
     print('Starting iterations with RF....')
     start_time = time.time()
-    results_random_forest = get_results(df, seeds, 'RF')
+    results_random_forest = get_results(df, seeds, 'RF', model_params)
     end_time = time.time()
     print(f'\n Execution time for RF is {end_time - start_time} \n')
     print('--------------------------------------')
 
     print('Starting iterations with DT....')
     start_time = time.time()
-    results_decision_tree = get_results(df, seeds, 'DT')
+    results_decision_tree = get_results(df, seeds, 'DT', model_params)
     end_time = time.time()
     print(f'Execution time for DT is {end_time - start_time} \n')
 
     print('Starting iterations with SVM....')
     start_time = time.time()
-    results_support_vector_machine = get_results(df, seeds, 'SVM')
+    results_support_vector_machine = get_results(df, seeds, 'SVM', model_params)
     end_time = time.time()
     print(f'Execution time for SVM is {end_time - start_time} \n')
 
