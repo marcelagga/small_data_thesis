@@ -57,24 +57,17 @@ def train_deep_forest(x_train, y_train, params):
     return clf
 
 
-def train_neural_network(x_train, y_train, params=None):
+def train_neural_network(x_train, y_train, params):
     """
     Returns a trained Neural Network with the given data.
     There is a distinction between binary or multiclass case
     but the Neural Network architecture is the same.
     """
-    if params is None:
-        nodes = 100
-        dropout = 0.1
-        learning_rate = 0.001
-        activation = 'elu'
-        epochs = 200
-    else:
-        nodes = params['nodes']
-        dropout = params['dropout']
-        learning_rate = params['dropout']
-        activation = params['activation']
-        epochs = params['epochs']
+    nodes = params['nodes']
+    dropout = params['dropout']
+    learning_rate = params['learning_rate']
+    activation = params['activation']
+    epochs = params['epochs']
 
     n_classes = len(np.unique(y_train))
     n_features = x_train.shape[1]
