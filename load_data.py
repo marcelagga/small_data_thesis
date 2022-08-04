@@ -37,8 +37,8 @@ def load_beans_dataset():
 
 
 def load_digits_dataset():
-    X, y = load_digits(return_X_y=True)
-    df_digits = pd.DataFrame(X)
+    x, y = load_digits(return_X_y=True)
+    df_digits = pd.DataFrame(x)
     df_digits['target'] = y
     return df_digits
 

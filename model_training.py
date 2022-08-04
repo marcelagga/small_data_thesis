@@ -51,41 +51,63 @@ def train_deep_forest(x_train, y_train, params):
     There is a bug in the code for Deep Forest and the
     classifier can't be reused in a loop.
     """
-    #clf = CascadeForestClassifier(random_state=0, verbose=0)
     clf = CascadeForestClassifier(**params)
 
     clf.fit(x_train, y_train)
     return clf
 
 
-def train_neural_network(x_train, y_train, params):
+def train_neural_network(x_train, y_train, params=None):
     """
     Returns a trained Neural Network with the given data.
     There is a distinction between binary or multiclass case
     but the Neural Network architecture is the same.
     """
+    if params is None:
+        nodes = 100
+        dropout = 0.1
+        learning_rate = 0.001
+        activation = 'elu'
+        epochs = 200
+    else:
+        nodes = params['nodes']
+        dropout = params['dropout']
+        learning_rate = params['dropout']
+        activation = params['activation']
+        epochs = params['epochs']
+
     n_classes = len(np.unique(y_train))
     n_features = x_train.shape[1]
     sequential_list = [InputLayer(n_features),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal()),
-                       Dropout(0.1),
-                       Dense(100, activation="elu", kernel_initializer=tf.keras.initializers.HeNormal())
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal()),
+                       Dropout(dropout),
+                       Dense(nodes, activation=activation,
+                             kernel_initializer=tf.keras.initializers.HeNormal())
                        ]
     if n_classes > 2:
         sequential_list.append(Dense(n_classes + 1, activation="softmax"))
@@ -96,9 +118,9 @@ def train_neural_network(x_train, y_train, params):
 
     clf = Sequential(sequential_list)
     clf.compile(loss=loss,
-                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                 metrics=['accuracy'])
-    clf.fit(x_train, y_train, epochs=200, batch_size=32, verbose=0)
+    clf.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=0)
 
     return clf
 
@@ -116,7 +138,7 @@ def compute_accuracy(x, y, clf, model):
     time_prediction = end_time - start_time
 
     if model == 'DNN':
-        loss, accuracy = clf.evaluate(x, y, verbose=0)
+        loss, accuracy = clf.evaluate(x, y, verbose = 0)
 
     else:
         hits = sum(prediction == y)
@@ -147,7 +169,7 @@ def get_results(df, seeds, model, model_params):
                'time_prediction_test': pd.DataFrame(columns=cols)}
 
     for seed in seeds:
-        if (seed + 1)%5 == 0:
+        if (seed + 1) % 5 == 0:
             print(f'\n Calculating seed {seed + 1} out of {len(seeds)}')
             print('-------------------------')
 
@@ -171,22 +193,21 @@ def get_results(df, seeds, model, model_params):
 
             start_time = time.time()
 
-
             if model == 'DF':
                 clf = train_deep_forest(x_train, y_train, params)
 
-            if model == 'DNN':
+            elif model == 'DNN':
                 clf = train_neural_network(x_train, y_train, params)
 
-            if model == 'RF':
+            elif model == 'RF':
                 clf = RandomForestClassifier(**params)
                 clf.fit(x_train, y_train)
 
-            if model == 'DT':
+            elif model == 'DT':
                 clf = DecisionTreeClassifier(**params)
                 clf.fit(x_train, y_train)
 
-            if model == 'SVM':
+            elif model == 'SVM':
                 clf = svm.SVC(**params)
                 clf.fit(x_train, y_train)
 
@@ -212,7 +233,7 @@ def get_results(df, seeds, model, model_params):
     return results
 
 
-def compute_all_models_results(df, model_params, n_seeds=30):
+def compute_all_models_results(df, model_params, n_seeds=1):
     """
     Computes the results for all the models
     """
@@ -314,7 +335,6 @@ def create_table_accuracy(results, metric):
     df_table = pd.DataFrame(columns=model_means.keys())
 
     for n in range(0, 10):
-
         new_row = {model: [round(model_means[model][n].mean(), 2)]
                    for model in model_means}
         df_new_row = pd.DataFrame.from_dict(new_row)
@@ -324,7 +344,8 @@ def create_table_accuracy(results, metric):
 
         for model in model_means:
             if model != best_model:
-                p_value = students_t_test(results[best_model]['accuracy_test'][n], results[model]['accuracy_test'][n])
+                p_value = students_t_test(results[best_model]['accuracy_test'][n],
+                                          results[model]['accuracy_test'][n])
                 if p_value > 0.05:
                     best_models.append(model)
 
