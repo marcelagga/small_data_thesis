@@ -162,7 +162,7 @@ def get_results(df, seeds, model, model_params):
                'time_prediction_test': pd.DataFrame(columns=cols)}
 
     for seed in seeds:
-        if (seed + 1) % 5 == 0:
+        if (seed + 1) % 1 == 0:
             print(f'\n Calculating seed {seed + 1} out of {len(seeds)}')
             print('-------------------------')
 
@@ -226,7 +226,7 @@ def get_results(df, seeds, model, model_params):
     return results
 
 
-def compute_all_models_results(df, model_params, n_seeds=1):
+def compute_all_models_results(df, model_params, n_seeds=30):
     """
     Computes the results for all the models
     """
@@ -280,12 +280,12 @@ def get_average_results(results, metric):
     Returns a dataframe with the results
     """
     df = pd.DataFrame()
-    df['DF'] = results['DF'][metric].mean()
-    df['DNN'] = results['DNN'][metric].mean()
-    df['RF'] = results['RF'][metric].mean()
-    df['DT'] = results['DT'][metric].mean()
-    df['SVM'] = results['SVM'][metric].mean()
-
+    df['DF'] = round(results['DF'][metric].mean(),4)
+    df['DNN'] = round(results['DNN'][metric].mean(),4)
+    df['RF'] = round(results['RF'][metric].mean(),4)
+    df['DT'] = round(results['DT'][metric].mean(),4)
+    df['SVM'] = round(results['SVM'][metric].mean(),4)
+    df.index = df.index*100 + 100
     return df
 
 
